@@ -3,7 +3,8 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\NhanVienController;
-
+use App\Http\Controllers\KhachHangController;
+use App\Http\Controllers\BatDongSanController;
 
 
 // Giao diện và xử lý Đăng nhập
@@ -30,3 +31,20 @@ Route::post('/admin/nhanvien/update/{id}', [NhanVienController::class, 'update']
 Route::get('/admin/nhanvien/delete/{id}', [NhanVienController::class, 'delete']);
 // Đường dẫn để in thử Hợp đồng ra PDF
 Route::get('/admin/hopdong/in-pdf', [NhanVienController::class, 'inHopDongPDF']);
+
+//CURD Khách Hàng
+Route::get('/admin/khachhang', [KhachHangController::class, 'index']);
+Route::get('/admin/khachhang/create', [KhachHangController::class, 'create']);
+Route::post('/admin/khachhang/store', [KhachHangController::class, 'store']);
+Route::get('/admin/khachhang/edit/{id}', [KhachHangController::class, 'edit']);
+Route::post('/admin/khachhang/update/{id}', [KhachHangController::class, 'update']);
+Route::post('/admin/khachhang/delete/{id}', [KhachHangController::class, 'delete']);
+
+// CURD Bất Động Sản
+Route::get('/admin/batdongsan', [BatDongSanController::class, 'index']);
+Route::get('/admin/batdongsan/create', [BatDongSanController::class, 'create']);
+Route::post('/admin/batdongsan/store', [BatDongSanController::class, 'store']);
+Route::get('/admin/batdongsan/edit/{id}', [BatDongSanController::class, 'edit']);
+Route::post('/admin/batdongsan/update/{id}', [BatDongSanController::class, 'update']);
+Route::post('/admin/batdongsan/delete/{id}', [BatDongSanController::class, 'delete']);
+Route::get('/admin/batdongsan/show/{id}', [BatDongSanController::class, 'show']);
