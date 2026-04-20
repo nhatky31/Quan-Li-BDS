@@ -12,10 +12,13 @@ class NhanVienController extends Controller
     public function index()
     {
         // Phải đăng nhập mới được xem
-        if (!Session::has('nvid')) {
-            return redirect('/login')->with('error', 'Vui lòng đăng nhập trước!');
+        if (!Session::has('nvid')) return redirect('/login');
+
+        // THÊM CHỐT CHẶN PHÂN QUYỀN VÀO ĐÂY
+        if (Session::get('nvid') != 1) {
+            // Nếu không phải Admin (ID 1) -> Đuổi về trang chủ
+            return redirect('/admin/dashboard'); 
         }
- 
         $danhsachNV = DB::table('nhanvien')->get();
 
         return view('admin.nhanvien.index', ['danhsachNV' => $danhsachNV]);
@@ -24,13 +27,15 @@ class NhanVienController extends Controller
     public function create()
     {
         if (!Session::has('nvid')) return redirect('/login');
+        if (Session::get('nvid') != 1) return redirect('/admin/dashboard');
         return view('admin.nhanvien.create');
     }
 
     // Xử lý lưu dữ liệu
     public function store(Request $request)
     {
-        
+        if (!Session::has('nvid')) return redirect('/login');
+        if (Session::get('nvid') != 1) return redirect('/admin/dashboard');
         $maxId = DB::table('nhanvien')->max('nvid');
         $newId = $maxId ? $maxId + 1 : 1;
 
@@ -52,6 +57,7 @@ class NhanVienController extends Controller
     public function edit($id)
     {
         if (!Session::has('nvid')) return redirect('/login');
+        if (Session::get('nvid') != 1) return redirect('/admin/dashboard');
         
         
         $nv = DB::table('nhanvien')->where('nvid', $id)->first();
@@ -60,6 +66,8 @@ class NhanVienController extends Controller
     }
     public function update(Request $request, $id)
     {
+        if (!Session::has('nvid')) return redirect('/login');
+        if (Session::get('nvid') != 1) return redirect('/admin/dashboard');
         DB::table('nhanvien')->where('nvid', $id)->update([
             'taikhoan'  => $request->input('taikhoan'),
             'matkhau'   => $request->input('matkhau'),
@@ -74,6 +82,8 @@ class NhanVienController extends Controller
     }
     public function delete($id)
     {
+        if (!Session::has('nvid')) return redirect('/login');
+        if (Session::get('nvid') != 1) return redirect('/admin/dashboard');
         try {
             // Thử xóa hẳn nhân viên khỏi cơ sở dữ liệu
             DB::table('nhanvien')->where('nvid', $id)->delete();

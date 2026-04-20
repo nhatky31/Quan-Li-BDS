@@ -49,21 +49,32 @@ class AuthController extends Controller
         }
     }
 
-    // Giao diện trang chủ Admin
-    public function dashboard()
+   public function dashboard()
     {
-        // Kiểm tra xem có Session chưa (đã đăng nhập chưa)
-        if (!Session::has('nvid')) {
-            return redirect('/login')->with('error', 'Vui lòng đăng nhập trước!');
-        }
+        // Nhớ thêm dòng use Illuminate\Support\Facades\DB; ở đầu file nếu chưa có
+        if (!Session::has('nvid')) return redirect('/login');
 
-        return view('admin.dashboard');
+        // Đếm số lượng thật từ Database
+        $tongKhachHang = DB::table('khachhang')->count();
+        $tongBDS = DB::table('batdongsan')->where('tinhtrang', 1)->count(); // Chỉ đếm nhà đang trống
+        $tongHD = DB::table('hopdongchuyennhuong')->count();
+
+        // Ném dữ liệu sang Giao diện
+        return view('admin.dashboard', [
+            'tongKhachHang' => $tongKhachHang,
+            'tongBDS' => $tongBDS,
+            'tongHD' => $tongHD
+        ]);
     }
-
-    // Xử lý Đăng xuất
     public function logout()
     {
-        Session::flush(); // Xóa sạch Session
+        // Xóa "thẻ nhân viên" (nvid) khỏi bộ nhớ Session
+        Session::forget('nvid');
+        
+        // (Tùy chọn) Nếu muốn xóa sạch sành sanh mọi dữ liệu phiên làm việc thì dùng:
+        // Session::flush();
+
+        // Đá người dùng về lại trang Đăng nhập
         return redirect('/login');
     }
 }

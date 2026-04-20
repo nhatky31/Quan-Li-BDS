@@ -91,7 +91,7 @@
 
     <div class="login-container">
         <div class="text-center">
-            <h2 class="logo-title">STU REAL ESTATE</h2>
+            <h2 class="logo-title">STU</h2>
             <p class="subtitle">Đăng nhập hệ thống quản lý</p>
         </div>
 
