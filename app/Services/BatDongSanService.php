@@ -57,8 +57,20 @@ class BatDongSanService
         ]);
     }
 
-    public function xoa($id)
+  public function xoa($id)
     {
+        // 1. Kiểm tra xem BĐS này có dính dáng đến BẤT KỲ hợp đồng nào không
+        $checkKyGui = DB::table('hopdongkygui')->where('bdsid', $id)->exists();
+        $checkDatCoc = DB::table('hopdongdatcoc')->where('bdsid', $id)->exists();
+        $checkChuyenNhuong = DB::table('hopdongchuyennhuong')->where('bdsid', $id)->exists();
+
+        // 2. Nếu có dính một trong 3 loại hợp đồng -> Ném lỗi ra ngoài
+        if ($checkKyGui || $checkDatCoc || $checkChuyenNhuong) {
+            // Quăng Exception để Controller bắt được và báo lỗi ra màn hình
+            throw new \Exception('Không thể xóa Bất động sản này vì đã phát sinh Hợp đồng (Ký gửi/Cọc/Bán).');
+        }
+
+        // 3. Nếu an toàn -> Mới thực hiện lệnh xóa
         return DB::table('batdongsan')->where('bdsid', $id)->delete();
     }
 }

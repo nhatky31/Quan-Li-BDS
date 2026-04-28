@@ -16,26 +16,27 @@ class BatDongSanController extends Controller
         $this->bdsService = $bdsService;
     }
 
+    // 1. Hiển thị danh sách BĐS
     public function index(Request $request)
     {
         if (!Session::has('nvid')) return redirect('/login');
 
-        // Gọi Service (Bước 3 sơ đồ)
         $danhsachBDS = $this->bdsService->getDanhSach($request->all());
 
         return view('admin.batdongsan.index', ['danhsachBDS' => $danhsachBDS]);
     }
 
+    // 2. Xem chi tiết BĐS
     public function show($id)
     {
         if (!Session::has('nvid')) return redirect('/login');
 
-        // Gọi Service (Bước 55 sơ đồ)
         $bds = $this->bdsService->getChiTiet($id);
 
         return view('admin.batdongsan.show', ['bds' => $bds]);
     }
 
+    // 3. Mở form thêm mới
     public function create()
     {
         if (!Session::has('nvid')) return redirect('/login');
@@ -49,9 +50,9 @@ class BatDongSanController extends Controller
         ]);
     }
 
+    // 4. Xử lý lưu mới
     public function store(Request $request)
     {
-        // Validation giữ nguyên logic của bạn
         $request->validate([
             'khid' => 'required',
             'dongia' => 'required|numeric|min:1000000',
@@ -63,51 +64,41 @@ class BatDongSanController extends Controller
             $hinhanhData = base64_encode(file_get_contents($request->file('hinhanh')->getRealPath()));
         }
 
-        // Gọi Service lưu (Bước 19 sơ đồ)
         $this->bdsService->taoMoi($request->all(), $hinhanhData);
 
-        return redirect('/admin/batdongsan');
+        return redirect('/admin/batdongsan')->with('success', 'Thêm Bất động sản thành công!');
     }
 
-    public function delete($id)
+    // 5. Mở form chỉnh sửa
+    public function edit($id)
     {
         if (!Session::has('nvid')) return redirect('/login');
-        $this->bdsService->xoa($id);
-        return redirect('/admin/batdongsan');
-    }
-   public function edit($id)
-    {
-        // 1. Lấy thông tin BĐS hiện tại
+
         $bds = DB::table('batdongsan')->where('bdsid', $id)->first();
 
-        // LOGIC BẢO MẬT: Đã bán (tinhtrang = 0) thì đuổi ra ngoài
+        // CHẶN: Đã bán thì không cho sửa
         if (!$bds || $bds->tinhtrang == 0) {
-            return redirect('/admin/batdongsan')->withErrors(['Lỗi bảo mật: Bất động sản này đã giao dịch, không thể sửa đổi!']);
+            return redirect('/admin/batdongsan')->withErrors(['Lỗi: BĐS này đã giao dịch thành công, không thể chỉnh sửa!']);
         }
 
-        // 2. Lấy thêm Danh sách Khách hàng và Loại BĐS để đổ vào ô Dropdown (Select)
         $danhsachKH = DB::table('khachhang')->get();
-        
-        // *Lưu ý: Bạn kiểm tra lại xem bảng loại BĐS trong Database của bạn tên là 'loaibds' hay 'loai' để sửa cho đúng nhé, ở đây mình tạm để là 'loaibds'
         $danhsachLoai = DB::table('loaibds')->get(); 
 
-        // 3. Gửi tất cả 3 biến này sang View
         return view('admin.batdongsan.edit', [
             'bds' => $bds,
             'danhsachKH' => $danhsachKH,
             'danhsachLoai' => $danhsachLoai
         ]);
     }
-    // Lưu thông tin Sửa
-   public function update(Request $request, $id)
+
+    // 6. Cập nhật dữ liệu
+    public function update(Request $request, $id)
     {
-        // 1. Kiểm tra lại lần nữa cho chắc (phòng người dùng cố tình đổi link)
         $bds = DB::table('batdongsan')->where('bdsid', $id)->first();
         if (!$bds || $bds->tinhtrang == 0) {
-            return redirect('/admin/batdongsan')->withErrors(['Lỗi bảo mật: Bất động sản này đã giao dịch, không thể sửa đổi!']);
+            return redirect('/admin/batdongsan')->withErrors(['Lỗi bảo mật: Không thể sửa BĐS đã bán!']);
         }
 
-        // 2. Gom tất cả dữ liệu từ Form (Đã bổ sung đầy đủ Diện tích, Loại, Khách hàng...)
         $dataUpdate = [
             'khid' => $request->khid,
             'loaiid' => $request->loaiid,
@@ -117,16 +108,26 @@ class BatDongSanController extends Controller
             'quan' => $request->quan
         ];
 
-        // 3. Xử lý Hình ảnh (Đã sửa lại thành chuẩn Base64 an toàn)
         if ($request->hasFile('hinhanh')) {
-            $file = $request->file('hinhanh');
-            // Dùng hàm base64_encode BỌC BÊN NGOÀI để biến ảnh thành chuỗi chữ
-            $dataUpdate['hinhanh'] = base64_encode(file_get_contents($file->getRealPath()));
+            $dataUpdate['hinhanh'] = base64_encode(file_get_contents($request->file('hinhanh')->getRealPath()));
         }
 
-        // 4. Lưu toàn bộ vào Database
         DB::table('batdongsan')->where('bdsid', $id)->update($dataUpdate);
 
-        return redirect('/admin/batdongsan')->with('success', 'Đã cập nhật Bất động sản thành công!');
+        return redirect('/admin/batdongsan')->with('success', 'Cập nhật thành công!');
+    }
+
+    // 7. Xử lý xóa (Có bọc Try-Catch để bắt lỗi ràng buộc từ Service)
+    public function delete($id)
+    {
+        if (!Session::has('nvid')) return redirect('/login');
+        
+        try {
+            $this->bdsService->xoa($id);
+            return redirect('/admin/batdongsan')->with('success', 'Đã xóa Bất động sản khỏi hệ thống!');
+        } catch (\Exception $e) {
+            // Hiển thị lỗi đỏ nếu BĐS đã có hợp đồng
+            return redirect('/admin/batdongsan')->withErrors([$e->getMessage()]);
+        }
     }
 }
